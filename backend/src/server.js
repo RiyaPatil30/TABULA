@@ -1,0 +1,169 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import dns from "node:dns";
+import cron from "node-cron";
+
+import connectDB from "./config/db.js";
+import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
+
+import authRoutes from "./routes/authRoutes.js";
+import restaurantRoutes from "./routes/restaurantRoutes.js";
+import tableRoutes from "./routes/tableRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
+import favoriteRoutes from "./routes/favoriteRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+
+import Booking from "./models/bookingModel.js";
+import Notification from "./models/notificationModel.js";
+import { updateExpiredBookings } from "./controllers/bookingController.js";
+
+const app = express();
+
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true
+  })
+);
+
+app.use(express.json({ limit: "1mb" }));
+app.use(cookieParser());
+
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Tabula backend is running."
+  });
+});
+
+app.get("/api/status", (req, res) => {
+  res.json({
+    success: true,
+    message: "Tabula API is running."
+  });
+});
+
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
+app.use("/api/auth", authRoutes);
+app.use("/api/restaurants", restaurantRoutes);
+app.use("/api/tables", tableRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/favorites", favoriteRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin", adminRoutes);
+
+const startExpiredBookingCompletion = () => {
+  cron.schedule("* * * * *", async () => {
+    try {
+      await updateExpiredBookings();
+    } catch (error) {
+      console.error("Expired booking completion failed:", error.message);
+    }
+  });
+};
+
+const startBookingReminder = () => {
+  cron.schedule("*/15 * * * *", async () => {
+    try {
+      const tomorrow = new Date(
+        new Date().toLocaleString("en-US", {
+          timeZone: "Asia/Kolkata"
+        })
+      );
+
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const dateString = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(tomorrow);
+
+      const dayStart = new Date(`${dateString}T00:00:00.000Z`);
+      const dayEnd = new Date(dayStart);
+
+      dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
+
+      const bookings = await Booking.find({
+        status: "confirmed",
+        bookingDate: {
+          $gte: dayStart,
+          $lt: dayEnd
+        }
+      }).populate("restaurant", "name");
+
+      for (const booking of bookings) {
+        const title = "Booking reminder";
+
+        const message = `Reminder: your booking at ${
+          booking.restaurant?.name || "the restaurant"
+        } is scheduled for tomorrow at ${booking.startTime}.`;
+
+        const existingNotification = await Notification.findOne({
+          user: booking.user,
+          title,
+          message,
+          type: "booking"
+        });
+
+        if (!existingNotification) {
+          await Notification.create({
+            user: booking.user,
+            title,
+            message,
+            type: "booking"
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Booking reminder failed:", error.message);
+    }
+  });
+};
+
+app.use(notFound);
+app.use(errorHandler);
+
+const startServer = async () => {
+  if (!process.env.MONGODB_URI) {
+    console.error("MONGODB_URI is missing in the .env file.");
+    process.exit(1);
+  }
+
+  if (!process.env.JWT_SECRET || !process.env.ADMIN_SETUP_KEY) {
+    console.error("JWT_SECRET or ADMIN_SETUP_KEY is missing in the .env file.");
+    process.exit(1);
+  }
+
+  try {
+    await connectDB();
+    await updateExpiredBookings();
+
+    startExpiredBookingCompletion();
+    startBookingReminder();
+
+    const PORT = process.env.PORT || 3000;
+
+    app.listen(PORT, () => {
+      console.log(`Tabula backend running at http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start Tabula backend:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();

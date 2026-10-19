@@ -1,0 +1,257 @@
+/* Tabula Theme */
+:root {
+  --primary: #315c4c;
+  --primary-dark: #234638;
+  --accent: #d6a96c;
+  --background: #f8f7f3;
+  --surface: #ffffff;
+  --text: #24332d;
+  --muted: #747d77;
+  --border: #e7e8e1;
+  --radius: 16px;
+  --shadow: 0 8px 28px rgba(35, 70, 56, 0.08);
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.navbar {
+  min-height: 76px;
+  padding: 16px 5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  color: var(--primary);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 22px;
+}
+
+.nav-links a {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover {
+  color: var(--primary);
+}
+
+.home-page,
+.restaurant-list-page,
+.restaurant-detail-page,
+.booking-page,
+.my-bookings-page,
+.booking-history-page,
+.favorites-page,
+.notifications-page,
+.profile-page,
+.admin-dashboard-page,
+.admin-login-page,
+.auth-page {
+  width: min(1120px, 90%);
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.hero {
+  min-height: 430px;
+  padding: 70px 8%;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #e9efe8, #f6ead9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.hero h1 {
+  color: var(--primary);
+  font-size: clamp(36px, 5vw, 58px);
+  line-height: 1.12;
+  margin: 0 0 12px;
+}
+
+.hero h2 {
+  font-size: clamp(20px, 3vw, 29px);
+  margin: 0 0 18px;
+}
+
+.hero p {
+  max-width: 560px;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+a,
+button {
+  transition: all 0.2s ease;
+}
+
+.hero a,
+button,
+.auth-page button,
+.booking-page button {
+  display: inline-block;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 22px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hero a:hover,
+button:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+h1 {
+  color: var(--primary);
+  margin-top: 0;
+}
+
+p {
+  line-height: 1.7;
+}
+
+.restaurant-card,
+.booking-card,
+.notification-card,
+.profile-details {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin: 18px 0;
+  box-shadow: var(--shadow);
+}
+
+.restaurant-card h2,
+.booking-card h2,
+.notification-card h2 {
+  color: var(--primary);
+}
+
+.restaurant-card a,
+.profile-page a,
+.booking-history-page a,
+.my-bookings-page > a,
+.favorites-page a,
+.notifications-page a,
+.restaurant-detail-page a {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+form {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 24px 0;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid #d9ded7;
+  border-radius: 10px;
+  background: white;
+  color: var(--text);
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(49, 92, 76, 0.12);
+}
+
+label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.auth-page {
+  max-width: 480px;
+  background: white;
+  padding: 36px;
+  margin-top: 55px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.admin-dashboard-page button {
+  margin-right: 10px;
+  margin-top: 8px;
+}
+
+@media (max-width: 760px) {
+  .navbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nav-links {
+    gap: 14px;
+  }
+
+  .home-page,
+  .restaurant-list-page,
+  .restaurant-detail-page,
+  .booking-page,
+  .my-bookings-page,
+  .booking-history-page,
+  .favorites-page,
+  .notifications-page,
+  .profile-page,
+  .admin-dashboard-page,
+  .admin-login-page,
+  .auth-page {
+    width: 92%;
+    padding-top: 28px;
+    padding-bottom: 28px;
+  }
+
+  .hero {
+    min-height: 350px;
+    padding: 35px 24px;
+  }
+
+  .auth-page {
+    padding: 24px;
+  }
+}
