@@ -25,6 +25,9 @@ function RestaurantListPage() {
     const fetchRestaurants = async () => {
       try {
         const response = await api.get("/api/restaurants");
+
+        console.log("Restaurant API response:", response.data);
+
         const data = response.data.restaurants;
 
         if (Array.isArray(data)) {
@@ -34,6 +37,8 @@ function RestaurantListPage() {
           setError("Restaurant data format is incorrect.");
         }
       } catch (err) {
+        console.error("Restaurant fetch error:", err);
+
         const message =
           err.response?.data?.message ||
           "Unable to load restaurants. Please try again.";
@@ -261,7 +266,7 @@ function RestaurantListPage() {
                         className={
                           isFavorite
                             ? "fill-red-600 text-red-600"
-                            : "fill-none text-white"
+                            : "fill-none text-gray-500"
                         }
                       />
                     </button>
