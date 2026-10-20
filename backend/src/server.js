@@ -1,3 +1,4 @@
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -27,10 +28,15 @@ const app = express();
 
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-   // origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true
+    origin: allowedOrigins,
+    credentials: true,
   })
 );
 
@@ -40,14 +46,14 @@ app.use(cookieParser());
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "Tabula backend is running."
+    message: "Tabula backend is running.",
   });
 });
 
 app.get("/api/status", (req, res) => {
   res.json({
     success: true,
-    message: "Tabula API is running."
+    message: "Tabula API is running.",
   });
 });
 
@@ -69,7 +75,10 @@ const startExpiredBookingCompletion = () => {
     try {
       await updateExpiredBookings();
     } catch (error) {
-      console.error("Expired booking completion failed:", error.message);
+      console.error(
+        "Expired booking completion failed:",
+        error.message
+      );
     }
   });
 };
@@ -77,32 +86,47 @@ const startExpiredBookingCompletion = () => {
 const startBookingReminder = () => {
   cron.schedule("*/15 * * * *", async () => {
     try {
-      const tomorrow = new Date(
-        new Date().toLocaleString("en-US", {
-          timeZone: "Asia/Kolkata"
-        })
-      );
+      const now = new Date();
 
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const indiaDate = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(now);
+
+      const [year, month, day] = indiaDate.split("-").map(Number);
+
+      const tomorrow = new Date(
+        Date.UTC(year, month - 1, day) + 24 * 60 * 60 * 1000
+      );
 
       const dateString = new Intl.DateTimeFormat("en-CA", {
         timeZone: "Asia/Kolkata",
         year: "numeric",
         month: "2-digit",
-        day: "2-digit"
+        day: "2-digit",
       }).format(tomorrow);
 
-      const dayStart = new Date(`${dateString}T00:00:00.000Z`);
-      const dayEnd = new Date(dayStart);
+      const [nextYear, nextMonth, nextDay] = dateString
+        .split("-")
+        .map(Number);
 
-      dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
+      const dayStart = new Date(
+        Date.UTC(nextYear, nextMonth - 1, nextDay) -
+          330 * 60 * 1000
+      );
+
+      const dayEnd = new Date(
+        dayStart.getTime() + 24 * 60 * 60 * 1000
+      );
 
       const bookings = await Booking.find({
         status: "confirmed",
         bookingDate: {
           $gte: dayStart,
-          $lt: dayEnd
-        }
+          $lt: dayEnd,
+        },
       }).populate("restaurant", "name");
 
       for (const booking of bookings) {
@@ -116,7 +140,7 @@ const startBookingReminder = () => {
           user: booking.user,
           title,
           message,
-          type: "booking"
+          type: "booking",
         });
 
         if (!existingNotification) {
@@ -124,7 +148,7 @@ const startBookingReminder = () => {
             user: booking.user,
             title,
             message,
-            type: "booking"
+            type: "booking",
           });
         }
       }
@@ -144,7 +168,9 @@ const startServer = async () => {
   }
 
   if (!process.env.JWT_SECRET || !process.env.ADMIN_SETUP_KEY) {
-    console.error("JWT_SECRET or ADMIN_SETUP_KEY is missing in the .env file.");
+    console.error(
+      "JWT_SECRET or ADMIN_SETUP_KEY is missing in the .env file."
+    );
     process.exit(1);
   }
 
@@ -158,10 +184,15 @@ const startServer = async () => {
     const PORT = process.env.PORT || 3000;
 
     app.listen(PORT, () => {
-      console.log(`Tabula backend running at http://localhost:${PORT}`);
+      console.log(
+        `Tabula backend running at http://localhost:${PORT}`
+      );
     });
   } catch (error) {
-    console.error("Failed to start Tabula backend:", error.message);
+    console.error(
+      "Failed to start Tabula backend:",
+      error.message
+    );
     process.exit(1);
   }
 };
